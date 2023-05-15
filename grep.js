@@ -13,7 +13,16 @@ program
   .arguments('<pattern> [file]')
   .description('grep from code challenge')
   .action((pattern, file) => {
-    grep(pattern, readStreamFromFileOrConsole(file))
+    var promise = grep(pattern, readStreamFromFileOrConsole(file));
+    promise
+    .then((result) => {
+    if (result && result.length > 0) {
+      process.exit(0);
+    } else {
+      process.exit(1);
+    }
+  })
+    
   });
 
 program.parse(process.argv);
@@ -72,7 +81,7 @@ function readLinesFromStream(stream, callback) {
 
 
 function grep(pattern, stream){
-  readLinesFromStream(stream, (line) => {
+  return readLinesFromStream(stream, (line) => {
     const found = containsPattern(pattern, line);
     if (found) {
       console.log(line);
