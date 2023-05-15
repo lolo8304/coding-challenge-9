@@ -3,6 +3,7 @@
 const { program } = require('commander');
 
 const fs = require('fs');
+const path = require('path');
 const { Readable } = require('stream');
 const readline = require('readline');
 
@@ -10,10 +11,11 @@ const readline = require('readline');
 program.version('1.0.0');
 
 program
-  .arguments('<pattern> [file]')
+  .arguments('<pattern> [files...]')
+  .option('-r')
   .description('grep from code challenge')
-  .action((pattern, file) => {
-    var promise = grep(pattern, readStreamFromFileOrConsole(file));
+  .action((pattern, files, options, commands) => {
+    var promise = grep(pattern, files, options, readStreamFromFilesOrConsole(files, options));
     promise
     .then((result) => {
     if (result && result.length > 0) {
@@ -28,14 +30,44 @@ program
 program.parse(process.argv);
 
 
+function iterateFiles(dir, filePatterns, options, callback) {
+  const files = fs.readdirSync(dir);
+
+  files.forEach((file) => {
+    const filePath = path.join(dir, file);
+    const isDirectory = fs.statSync(filePath).isDirectory();
+
+    if (options.r && isDirectory) {
+      // Recursively iterate over subfolders
+      iterateFiles(filePath, filePatterns, options, callback);
+    } else {
+      // Check if the file matches any of the specified patterns
+      const matchesPattern = filePatterns.some((pattern) => {
+        const regex = new RegExp(pattern);
+        return regex.test(file);
+      });
+
+      if (matchesPattern) {
+        // Perform operations on the matched file
+        callback(filePath);
+      }
+    }
+  });
+}
 
 
+function readStreamFromFilesOrConsole(files, options) {
+  if (files && files.length > 0) {
+    var filteredFiles =[]
+   
+   iterateFiles("", filePatterns, options, (file) => {
+    filteredFiles.push(file)
+   });
 
-
-function readStreamFromFileOrConsole(file = null) {
-  if (file) {
-    const stream = fs.createReadStream(file);
-    return stream;
+   return filteredFiles.map((file) => {
+     name: file,
+     stream: fs.createReadStream(file)
+   })
   } else {
     const stream = new Readable({
       read(size) {
@@ -47,15 +79,15 @@ function readStreamFromFileOrConsole(file = null) {
         }
       }
     });
-    return stream;
+    return [{name: "console", stream: stream}];
   }
 }
 
 
 
-function readLinesFromStream(stream, callback) {
+function readLinesFromStream(streamObj, callback) {
   const rl = readline.createInterface({
-    input: stream,
+    input: streamObj.stream,
     crlfDelay: Infinity
   });
   
@@ -80,11 +112,17 @@ function readLinesFromStream(stream, callback) {
 
 
 
-function grep(pattern, stream){
-  return readLinesFromStream(stream, (line) => {
+function grep(pattern, files, options, streams){
+  var logName = files && files.length > 1
+  
+  return readLinesFromStream(streams[0], (line) => {
     const found = containsPattern(pattern, line);
     if (found) {
-      console.log(line);
+      if (logName) {
+        console.log(streamObj.name+":"+line)
+      } else {
+        console.log(line);
+      }
     }
      return found;
 })
