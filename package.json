@@ -1,0 +1,35 @@
+{
+  "name": "grep",
+  "version": "1.0.0",
+  "description": "grep from coding challenge 9",
+  "main": "grep.js",
+  "scripts": {
+    "test": "test",
+    "start": "node grep.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lolo8304/coding-challenge-9.git"
+  },
+  "keywords": [
+    "grep",
+    "coding",
+    "challenge"
+  ],
+  "author": "lolo8304",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lolo8304/coding-challenge-9/issues"
+  },
+  "homepage": "https://github.com/lolo8304/coding-challenge-9#readme",
+  "dependencies": {
+    "commander": "^10.0.1",
+    "make-cli": "^3.0.4",
+    "sywac": "^1.3.0"
+  },
+  "bin": {
+    "name": "grep",
+    "version": "1.0.0",
+    "bin": "grep.js"
+  }
+}
