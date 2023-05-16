@@ -22,7 +22,9 @@ async function actionMethod (pattern, files, options, commands) {
 
 program
   .arguments('<pattern> [files...]')
-  .option('-r')
+  .option('-r, --recursive')
+  .option('-v, --invert-match')
+  .option('--debug')
   .description('grep from code challenge')
   .action(actionMethod);
 
@@ -55,7 +57,7 @@ function iterateFiles(dir, filePatterns, options, callback) {
     const isDirectory = fs.statSync(filePath).isDirectory();
     //console.log(filePath);
 
-    if (options.r && isDirectory) {
+    if (options.recursive && isDirectory) {
       // Recursively iterate over subfolders
       iterateFiles(filePath, filePatterns, options, callback);
     } else {
@@ -91,17 +93,12 @@ function readStreamFromFilesOrConsole(files, options) {
    });
    return filteredStreams;
   } else {
-    const stream = new Readable({
-      read(size) {
-        const chunk = process.stdin.read(size);
-        if (chunk !== null) {
-          this.push(chunk);
-        } else {
-          this.push(null);
-        }
+    return [
+      {
+        name: "console", 
+        stream: process.stdin 
       }
-    });
-    return [{name: "console", stream: stream}];
+    ];
   }
 }
 
@@ -141,7 +138,7 @@ async function grep(pattern, files, options, streams) {
   var totalFound=0;
   for(const stream of streams) {
     var mypromise = readLinesFromStream(stream, (line) => {
-      const found = containsPattern(pattern, line);
+      const found = containsPattern(options, pattern, line);
       if (found) {
         if (logName) {
           console.log(stream.name+":"+line)
@@ -157,11 +154,15 @@ async function grep(pattern, files, options, streams) {
   return totalFound
 }
 
-function containsPattern(pattern, line) {
-  if (pattern) {
-    return line.includes(pattern)
+function containsPattern(options, pattern, line) {
+  if (options.debug) { 
+    console.log("test: "+line) 
+  }
+  var found = pattern && line.includes(pattern)
+if (options.invertMatch) {
+    return !found
   } else {
-    return true;
+    return found
   }
 }
 
