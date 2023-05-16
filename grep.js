@@ -34,6 +34,18 @@ function wildcardToRegExp(wildcard) {
   return new RegExp(`^${regex}$`);
 }
 
+function iterateOverFileNamesOrPatterns(fileNamesOrPatterns, options, callback) {
+  for(const fileNameOrPath of fileNamesOrPatterns) {
+    const filePath = path.dirname(fileNameOrPath);
+    const baseName = path.basename(fileNameOrPath);
+    if (!filePath) {
+      filePath = "./"
+    }
+    //console.log("search "+filePath+" name "+baseName)
+    iterateFiles(filePath, [baseName], options, callback)
+  }
+}
+
 
 function iterateFiles(dir, filePatterns, options, callback) {
   const files = fs.readdirSync(dir);
@@ -66,7 +78,7 @@ function readStreamFromFilesOrConsole(files, options) {
   if (files && files.length > 0) {
     var filteredFiles =[]
    
-   iterateFiles("./", files, options, (file) => {
+   iterateOverFileNamesOrPatterns(files, options, (file) => {
     filteredFiles.push(file)
    });
 
