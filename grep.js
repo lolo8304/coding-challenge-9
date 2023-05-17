@@ -24,6 +24,7 @@ program
   .arguments('<pattern> [files...]')
   .option('-r, --recursive')
   .option('-v, --invert-match')
+  .option('-i, --ignore-case')
   .option('--debug')
   .option('--verbose')
   .description('grep from code challenge')
@@ -170,7 +171,7 @@ async function grep(pattern, files, options, streams) {
 
 function matchesRegExpPattern(options, pattern, line) {
   //const match = pattern && line.includes(pattern)
-  const regex = new RegExp(pattern);
+  const regex = options.ignoreCase ? new RegExp(pattern, 'i') : new RegExp(pattern);
   const match = regex.test(line);
   
   if (options.verbose) { 
