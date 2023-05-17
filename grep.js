@@ -169,6 +169,8 @@ async function grep(pattern, files, options, streams) {
   return totalFound
 }
 
+
+// if -i is used then ignore case pattern search
 function matchesRegExpPattern(options, pattern, line) {
   //const match = pattern && line.includes(pattern)
   const regex = options.ignoreCase ? new RegExp(pattern, 'i') : new RegExp(pattern);
