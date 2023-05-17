@@ -30,21 +30,34 @@ program
 
 program.parse(process.argv);
 
-function wildcardToRegExp(wildcard) {
-  const escapedWildcard = wildcard.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+function wildcardToRegExp(options, wildcard) {
+  const escapedWildcard = wildcard.replace(/[.*+?^${}()|[\]\\]/g, '\$&');
   const regex = escapedWildcard.replace(/\*/g, '.*').replace(/\?/g, '.');
-  return new RegExp(`^${regex}$`);
+  const regExpString = "^"+regex+"$"
+  if (options.debug) {
+    console.log("regexp: "+regExpString)
+  }
+  return new RegExp(regExpString);
 }
 
 function iterateOverFileNamesOrPatterns(fileNamesOrPatterns, options, callback) {
   for(const fileNameOrPath of fileNamesOrPatterns) {
     const filePath = path.dirname(fileNameOrPath);
     const baseName = path.basename(fileNameOrPath);
+    const isDirectory = fs.statSync(fileNameOrPath).isDirectory();
     if (!filePath) {
       filePath = "./"
     }
-    //console.log("search "+filePath+" name "+baseName)
-    iterateFiles(filePath, [baseName], options, callback)
+    if (options.debug) {
+      console.log("filepath: "+filePath)
+      console.log("file: "+baseName)
+    }
+    if (!options.recursive && isDirectory) {
+      console.log("grep: "+fileNameOrPath+": is a directory")
+    } else {
+      iterateFiles(filePath, [baseName], options, callback)
+    }
+    
   }
 }
 
@@ -55,22 +68,22 @@ function iterateFiles(dir, filePatterns, options, callback) {
   files.forEach((file) => {
     const filePath = path.join(dir, file);
     const isDirectory = fs.statSync(filePath).isDirectory();
-    //console.log(filePath);
+    const matchesPattern = filePatterns.some((pattern) => {
+      const regex = new RegExp(wildcardToRegExp(options, pattern));
+      return regex.test(file);
+    });
+    if (options.debug) {
+      console.log("filepath: "+filePath)
+      console.log("patterns: "+filePatterns)
+      console.log("matchesPattern "+matchesPattern+"\n")
+    }
 
+    if (!isDirectory && matchesPattern) {
+      callback(filePath);
+    }
     if (options.recursive && isDirectory) {
       // Recursively iterate over subfolders
-      iterateFiles(filePath, filePatterns, options, callback);
-    } else {
-      //console.log("--------")
-      // Check if the file matches any of the specified patterns
-      const matchesPattern = filePatterns.some((pattern) => {
-        const regex = new RegExp(wildcardToRegExp(pattern));
-        return regex.test(file);
-      });
-
-      if (matchesPattern) {
-        callback(filePath);
-      }
+      iterateFiles(filePath, ["*"], options, callback);
     }
   });
 }
@@ -156,7 +169,7 @@ async function grep(pattern, files, options, streams) {
 
 function containsPattern(options, pattern, line) {
   if (options.debug) { 
-    console.log("test: "+line) 
+    //console.log("test: "+line) 
   }
   var found = pattern && line.includes(pattern)
 if (options.invertMatch) {
