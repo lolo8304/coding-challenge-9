@@ -25,6 +25,7 @@ program
   .option('-r, --recursive')
   .option('-v, --invert-match')
   .option('--debug')
+  .option('--verbose')
   .description('grep from code challenge')
   .action(actionMethod);
 
@@ -32,7 +33,7 @@ program.parse(process.argv);
 
 function wildcardToRegExp(options, wildcard) {
   const escapedWildcard = wildcard.replace(/[.*+?^${}()|[\]\\]/g, '\$&');
-  const regex = escapedWildcard.replace(/\*/g, '.*').replace(/\?/g, '.');
+  const regex = escapedWildcard.replace(/\*/g, '.*').replace(/\?/g, '.').replace(/[\\]{2}([dw])/g, '\$1');
   const regExpString = "^"+regex+"$"
   if (options.debug) {
     console.log("regexp: "+regExpString)
@@ -167,11 +168,19 @@ async function grep(pattern, files, options, streams) {
   return totalFound
 }
 
-function containsPattern(options, pattern, line) {
-  if (options.debug) { 
-    //console.log("test: "+line) 
+function matchesRegExpPattern(options, pattern, line) {
+  //const match = pattern && line.includes(pattern)
+  const regex = new RegExp(pattern);
+  const match = regex.test(line);
+  
+  if (options.verbose) { 
+    console.log((match ? "x":"-")+" pattern '"+pattern+"' '"+line+"'") 
   }
-  var found = pattern && line.includes(pattern)
+  return match
+}
+
+function containsPattern(options, pattern, line) {
+  var found = matchesRegExpPattern(options, pattern, line)
 if (options.invertMatch) {
     return !found
   } else {
