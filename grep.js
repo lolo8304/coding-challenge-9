@@ -11,8 +11,9 @@ const readline = require('readline');
 program.version('1.0.0');
 
 
-async function actionMethod (pattern, files, options, commands) {
-    var totalCount = await grep(pattern, files, options, readStreamFromFilesOrConsole(files, options));
+async function executeGrepCommand (pattern, files, options, commands) {
+    const patternUnquoted = pattern.replace(/^['"]|['"]$/g, '');
+    var totalCount = await grep(patternUnquoted, files, options, readStreamFromFilesOrConsole(files, options));
     if (totalCount > 0) {
       process.exit(0);
     } else {
@@ -28,7 +29,7 @@ program
   .option('--debug')
   .option('--verbose')
   .description('grep from code challenge')
-  .action(actionMethod);
+  .action(executeGrepCommand);
 
 program.parse(process.argv);
 
@@ -161,6 +162,7 @@ async function grep(pattern, files, options, streams) {
           console.log(line);
         }
       }
+      return found;
     })
     
     var resultList = await mypromise;
@@ -190,5 +192,4 @@ if (options.invertMatch) {
     return found
   }
 }
-
 
