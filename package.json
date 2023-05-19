@@ -4,7 +4,7 @@
   "description": "grep from coding challenge 9",
   "main": "grep.js",
   "scripts": {
-    "test": "test",
+    "test": "mocha *.test.js",
     "start": "node grep.js"
   },
   "repository": {
@@ -29,5 +29,11 @@
     "name": "grep",
     "version": "1.0.0",
     "bin": "grep.js"
+  },
+  "devDependencies": {
+    "babel-preset-env": "^1.7.0",
+    "babel-register": "^6.26.0",
+    "mocha": "^10.2.0",
+    "rewire": "^6.0.0"
   }
 }
